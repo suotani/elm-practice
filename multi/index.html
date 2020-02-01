@@ -5027,24 +5027,15 @@ var author$project$Main$update = F2(
 								A2(author$project$Main$deleteListFromID, id, model.steps))
 						}),
 					elm$core$Platform$Cmd$none);
-			case 'InputUrls':
-				var id = msg.a;
-				var urls = msg.b;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							steps: A4(author$project$Main$fieldUpdater, model.steps, id, 'urls', urls)
-						}),
-					elm$core$Platform$Cmd$none);
 			default:
-				var id = msg.a;
-				var text = msg.b;
+				var column = msg.a;
+				var id = msg.b;
+				var val = msg.c;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							steps: A4(author$project$Main$fieldUpdater, model.steps, id, 'text', text)
+							steps: A4(author$project$Main$fieldUpdater, model.steps, id, column, val)
 						}),
 					elm$core$Platform$Cmd$none);
 		}
@@ -5053,13 +5044,9 @@ var author$project$Main$AddField = {$: 'AddField'};
 var author$project$Main$DeleteField = function (a) {
 	return {$: 'DeleteField', a: a};
 };
-var author$project$Main$InputText = F2(
-	function (a, b) {
-		return {$: 'InputText', a: a, b: b};
-	});
-var author$project$Main$InputUrls = F2(
-	function (a, b) {
-		return {$: 'InputUrls', a: a, b: b};
+var author$project$Main$Input = F3(
+	function (a, b, c) {
+		return {$: 'Input', a: a, b: b, c: c};
 	});
 var elm$core$Basics$identity = function (x) {
 	return x;
@@ -5188,7 +5175,7 @@ var author$project$Main$fieldView = function (step) {
 								elm$html$Html$Attributes$name(
 								'curriculum[steps_attributes][' + (elm$core$String$fromInt(step.id) + '][urls]')),
 								elm$html$Html$Events$onInput(
-								author$project$Main$InputUrls(step.id))
+								A2(author$project$Main$Input, 'urls', step.id))
 							]),
 						_List_Nil)
 					])),
@@ -5207,7 +5194,7 @@ var author$project$Main$fieldView = function (step) {
 								elm$html$Html$Attributes$name(
 								'curriculum[steps_attributes][' + (elm$core$String$fromInt(step.id) + '][text]')),
 								elm$html$Html$Events$onInput(
-								author$project$Main$InputText(step.id))
+								A2(author$project$Main$Input, 'text', step.id))
 							]),
 						_List_Nil)
 					]))

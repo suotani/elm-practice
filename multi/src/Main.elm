@@ -37,8 +37,7 @@ init _ =
 type Msg
   = AddField
   | DeleteField Int
-  | InputUrls Int String
-  | InputText Int String
+  | Input String Int String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -50,11 +49,8 @@ update msg model =
     DeleteField id ->
       ({ model | steps = reNumbering (deleteListFromID id model.steps) }, Cmd.none)
     
-    InputUrls id urls ->
-      ({model | steps = fieldUpdater model.steps id "urls" urls }, Cmd.none)
-
-    InputText id text ->
-      ({model | steps = fieldUpdater model.steps id "text" text }, Cmd.none)
+    Input column id val ->
+      ({model | steps = fieldUpdater model.steps id column val }, Cmd.none)
 
 deleteListFromID : Int -> List Step -> List Step
 deleteListFromID id steps = List.filter (\x -> not(x.id == id)) steps
@@ -112,7 +108,7 @@ fieldView step =
             , placeholder "urls"
             , value step.urls
             , name ("curriculum[steps_attributes][" ++ (String.fromInt step.id) ++ "][urls]") 
-            , onInput (InputUrls step.id)
+            , onInput (Input "urls" step.id)
             ] []]
     , div []
         [ input
@@ -120,6 +116,6 @@ fieldView step =
            , placeholder "text"
            , value step.text
            , name ("curriculum[steps_attributes][" ++ (String.fromInt step.id) ++ "][text]")
-           , onInput (InputText step.id)
+           , onInput (Input "text" step.id)
           ] []]
     ]

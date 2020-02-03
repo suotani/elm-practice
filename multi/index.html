@@ -4867,7 +4867,7 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
 };
-var elm$core$Basics$not = _Basics_not;
+var elm$core$Basics$neq = _Utils_notEqual;
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -4937,11 +4937,17 @@ var elm$core$List$filter = F2(
 var author$project$Main$deleteListFromID = F2(
 	function (id, steps) {
 		return A2(
-			elm$core$List$filter,
-			function (x) {
-				return !_Utils_eq(x.id, id);
-			},
-			steps);
+			elm$core$List$indexedMap,
+			F2(
+				function (i, step) {
+					return A3(author$project$Main$Step, step.urls, step.text, i + 1);
+				}),
+			A2(
+				elm$core$List$filter,
+				function (x) {
+					return !_Utils_eq(x.id, id);
+				},
+				steps));
 	});
 var author$project$Main$updateField = F4(
 	function (id, column, val, step) {
@@ -4972,22 +4978,11 @@ var elm$core$List$map = F2(
 			_List_Nil,
 			xs);
 	});
-var author$project$Main$fieldUpdater = F4(
-	function (steps, id, column, val) {
-		return A2(
-			elm$core$List$map,
-			A3(author$project$Main$updateField, id, column, val),
-			steps);
+var author$project$Main$fieldUpdater = F3(
+	function (id, column, val) {
+		return elm$core$List$map(
+			A3(author$project$Main$updateField, id, column, val));
 	});
-var author$project$Main$reNumbering = function (steps) {
-	return A2(
-		elm$core$List$indexedMap,
-		F2(
-			function (i, step) {
-				return A3(author$project$Main$Step, step.urls, step.text, i + 1);
-			}),
-		steps);
-};
 var elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -5023,8 +5018,7 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							steps: author$project$Main$reNumbering(
-								A2(author$project$Main$deleteListFromID, id, model.steps))
+							steps: A2(author$project$Main$deleteListFromID, id, model.steps)
 						}),
 					elm$core$Platform$Cmd$none);
 			default:
@@ -5035,7 +5029,7 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							steps: A4(author$project$Main$fieldUpdater, model.steps, id, column, val)
+							steps: A4(author$project$Main$fieldUpdater, id, column, val, model.steps)
 						}),
 					elm$core$Platform$Cmd$none);
 		}

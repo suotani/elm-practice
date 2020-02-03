@@ -47,20 +47,18 @@ update msg model =
       , Cmd.none)
     
     DeleteField id ->
-      ({ model | steps = reNumbering (deleteListFromID id model.steps) }, Cmd.none)
+      ({ model | steps = deleteListFromID id model.steps }, Cmd.none)
     
     Input column id val ->
-      ({model | steps = fieldUpdater model.steps id column val }, Cmd.none)
+      ({model | steps = fieldUpdater id column val model.steps }, Cmd.none)
 
 deleteListFromID : Int -> List Step -> List Step
-deleteListFromID id steps = List.filter (\x -> not(x.id == id)) steps
+deleteListFromID id steps =
+  List.filter ( \x -> x.id /= id ) steps
+    |> List.indexedMap (\i step -> Step step.urls step.text (i+1))
 
-reNumbering : List Step -> List Step
-reNumbering steps =
-  List.indexedMap (\i step -> Step step.urls step.text (i+1)) steps
-
-fieldUpdater : List Step -> Int -> String -> String -> List Step
-fieldUpdater steps id column val = List.map (updateField id column val) steps
+fieldUpdater : Int -> String -> String -> List Step -> List Step
+fieldUpdater id column val = updateField id column val |> List.map
 
 updateField : Int -> String -> String -> Step -> Step
 updateField id column val step =

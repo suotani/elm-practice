@@ -4369,7 +4369,9 @@ var author$project$Main$Model = function (year) {
 										return function (date) {
 											return function (place) {
 												return function (explain) {
-													return {currentDay: currentDay, currentMonth: currentMonth, currentYear: currentYear, date: date, day: day, eventDay: eventDay, events: events, explain: explain, month: month, place: place, title: title, viewStatus: viewStatus, year: year};
+													return function (eventId) {
+														return {currentDay: currentDay, currentMonth: currentMonth, currentYear: currentYear, date: date, day: day, eventDay: eventDay, eventId: eventId, events: events, explain: explain, month: month, place: place, title: title, viewStatus: viewStatus, year: year};
+													};
 												};
 											};
 										};
@@ -4863,18 +4865,19 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
 		author$project$Main$Model(2020)(2)(8)(2020)(2)(8)(_List_Nil)(author$project$Main$Init)(
-			_Utils_Tuple3(0, 0, 0))('')('')('')(''),
+			_Utils_Tuple3(0, 0, 0))('')('')('')('')(0),
 		elm$core$Platform$Cmd$none);
 };
 var elm$core$Platform$Sub$batch = _Platform_batch;
 var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
-var author$project$Main$subscriptions = function (model) {
+var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
 var author$project$Main$Event = F8(
 	function (id, year, month, day, title, date, place, explain) {
 		return {date: date, day: day, explain: explain, id: id, month: month, place: place, title: title, year: year};
 	});
+var author$project$Main$EventModal = {$: 'EventModal'};
 var author$project$Main$Modal = {$: 'Modal'};
 var isaacseymour$deprecated_time$Time$Date$day = function (_n0) {
 	var inner = _n0.a;
@@ -4922,6 +4925,91 @@ var author$project$Main$dateToTuple = function (d) {
 		isaacseymour$deprecated_time$Time$Date$month(d),
 		isaacseymour$deprecated_time$Time$Date$day(d));
 };
+var elm$core$Basics$not = _Basics_not;
+var elm$core$List$foldrHelper = F4(
+	function (fn, acc, ctr, ls) {
+		if (!ls.b) {
+			return acc;
+		} else {
+			var a = ls.a;
+			var r1 = ls.b;
+			if (!r1.b) {
+				return A2(fn, a, acc);
+			} else {
+				var b = r1.a;
+				var r2 = r1.b;
+				if (!r2.b) {
+					return A2(
+						fn,
+						a,
+						A2(fn, b, acc));
+				} else {
+					var c = r2.a;
+					var r3 = r2.b;
+					if (!r3.b) {
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(fn, c, acc)));
+					} else {
+						var d = r3.a;
+						var r4 = r3.b;
+						var res = (ctr > 500) ? A3(
+							elm$core$List$foldl,
+							fn,
+							acc,
+							elm$core$List$reverse(r4)) : A4(elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(
+									fn,
+									c,
+									A2(fn, d, res))));
+					}
+				}
+			}
+		}
+	});
+var elm$core$List$foldr = F3(
+	function (fn, acc, ls) {
+		return A4(elm$core$List$foldrHelper, fn, acc, 0, ls);
+	});
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var elm$core$Basics$modBy = _Basics_modBy;
 var elm$core$Basics$negate = function (n) {
 	return -n;
@@ -5046,11 +5134,39 @@ var author$project$Main$update = F2(
 						model,
 						{eventDay: d, viewStatus: author$project$Main$Modal}),
 					elm$core$Platform$Cmd$none);
+			case 'ShowEventModal':
+				var e = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							eventDay: _Utils_Tuple3(e.year, e.month, e.day),
+							eventId: e.id,
+							explain: e.explain,
+							place: e.place,
+							title: e.title,
+							viewStatus: author$project$Main$EventModal
+						}),
+					elm$core$Platform$Cmd$none);
 			case 'CloseModal':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{viewStatus: author$project$Main$Init}),
+						{date: '', explain: '', place: '', title: '', viewStatus: author$project$Main$Init}),
+					elm$core$Platform$Cmd$none);
+			case 'RemoveEvent':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							events: A2(
+								elm$core$List$filter,
+								function (e) {
+									return !_Utils_eq(e.id, model.eventId);
+								},
+								model.events),
+							viewStatus: author$project$Main$Init
+						}),
 					elm$core$Platform$Cmd$none);
 			case 'InputEvent':
 				var column = msg.a;
@@ -5084,20 +5200,15 @@ var author$project$Main$update = F2(
 						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 			case 'SaveEvent':
+				var headE = A2(
+					elm$core$Maybe$withDefault,
+					A8(author$project$Main$Event, 0, 0, 0, 0, '', '', '', ''),
+					elm$core$List$head(model.events));
 				var _n2 = model.eventDay;
 				var y = _n2.a;
 				var m = _n2.b;
 				var d = _n2.c;
-				var e = A8(
-					author$project$Main$Event,
-					elm$core$List$length(model.events),
-					y,
-					m,
-					d,
-					model.title,
-					model.date,
-					model.place,
-					model.explain);
+				var e = A8(author$project$Main$Event, headE.id + 1, y, m, d, model.title, model.date, model.place, model.explain);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -5133,6 +5244,7 @@ var author$project$Main$InputEvent = F2(
 	function (a, b) {
 		return {$: 'InputEvent', a: a, b: b};
 	});
+var author$project$Main$RemoveEvent = {$: 'RemoveEvent'};
 var author$project$Main$SaveEvent = {$: 'SaveEvent'};
 var author$project$Main$lastDay = F2(
 	function (y, m) {
@@ -5156,61 +5268,6 @@ var author$project$Main$toIntWeekday = function (d) {
 			return 6;
 	}
 };
-var elm$core$List$foldrHelper = F4(
-	function (fn, acc, ctr, ls) {
-		if (!ls.b) {
-			return acc;
-		} else {
-			var a = ls.a;
-			var r1 = ls.b;
-			if (!r1.b) {
-				return A2(fn, a, acc);
-			} else {
-				var b = r1.a;
-				var r2 = r1.b;
-				if (!r2.b) {
-					return A2(
-						fn,
-						a,
-						A2(fn, b, acc));
-				} else {
-					var c = r2.a;
-					var r3 = r2.b;
-					if (!r3.b) {
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(fn, c, acc)));
-					} else {
-						var d = r3.a;
-						var r4 = r3.b;
-						var res = (ctr > 500) ? A3(
-							elm$core$List$foldl,
-							fn,
-							acc,
-							elm$core$List$reverse(r4)) : A4(elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(
-									fn,
-									c,
-									A2(fn, d, res))));
-					}
-				}
-			}
-		}
-	});
-var elm$core$List$foldr = F3(
-	function (fn, acc, ls) {
-		return A4(elm$core$List$foldrHelper, fn, acc, 0, ls);
-	});
 var elm$core$List$map = F2(
 	function (f, xs) {
 		return A3(
@@ -5473,17 +5530,6 @@ var author$project$Main$createDates = F2(
 var author$project$Main$ShowModel = function (a) {
 	return {$: 'ShowModel', a: a};
 };
-var elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
 var author$project$Main$findEvents = F2(
 	function (model, _n0) {
 		var y = _n0.a;
@@ -5497,10 +5543,14 @@ var author$project$Main$findEvents = F2(
 			model.events);
 	});
 var author$project$Main$toStringDay = function (_n0) {
-	var y = _n0.a;
-	var m = _n0.b;
 	var d = _n0.c;
 	return elm$core$String$fromInt(d);
+};
+var author$project$Main$ShowEventModal = function (a) {
+	return {$: 'ShowEventModal', a: a};
+};
+var elm$virtual_dom$VirtualDom$Custom = function (a) {
+	return {$: 'Custom', a: a};
 };
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
@@ -5516,6 +5566,21 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 		default:
 			return 3;
 	}
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$custom = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Custom(decoder));
+	});
+var author$project$Main$customOnClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$custom,
+		'click',
+		elm$json$Json$Decode$succeed(
+			{message: msg, preventDefault: true, stopPropagation: true}));
 };
 var elm$html$Html$p = _VirtualDom_node('p');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
@@ -5534,7 +5599,9 @@ var author$project$Main$viewEventTag = function (e) {
 		elm$html$Html$p,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('event')
+				elm$html$Html$Attributes$class('event'),
+				author$project$Main$customOnClick(
+				author$project$Main$ShowEventModal(e))
 			]),
 		_List_fromArray(
 			[
@@ -5545,7 +5612,6 @@ var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
 var elm$html$Html$Events$on = F2(
 	function (event, decoder) {
 		return A2(
@@ -5604,22 +5670,6 @@ var author$project$Main$dayList = function (model) {
 		},
 		A2(author$project$Main$createDates, model.year, model.month));
 };
-var author$project$Main$weekDaysView = A2(
-	elm$core$List$map,
-	function (w) {
-		return A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('header-item')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text(w)
-				]));
-	},
-	_List_fromArray(
-		['日', '月', '火', '水', '木', '金', '土']));
 var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$i = _VirtualDom_node('i');
 var elm$html$Html$input = _VirtualDom_node('input');
@@ -5757,7 +5807,22 @@ var author$project$Main$view = function (model) {
 							[
 								elm$html$Html$Attributes$class('calender-header')
 							]),
-						author$project$Main$weekDaysView),
+						A2(
+							elm$core$List$map,
+							function (w) {
+								return A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('header-item')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text(w)
+										]));
+							},
+							_List_fromArray(
+								['日', '月', '火', '水', '木', '金', '土']))),
 						A2(
 						elm$html$Html$div,
 						_List_fromArray(
@@ -5766,181 +5831,316 @@ var author$project$Main$view = function (model) {
 							]),
 						author$project$Main$dayList(model))
 					])),
-				_Utils_eq(model.viewStatus, author$project$Main$Modal) ? A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('modal-back')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$div,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('modal')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('modal-content')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										elm$html$Html$div,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('btn-wrap')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												elm$html$Html$span,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('close-btn'),
-														elm$html$Html$Events$onClick(author$project$Main$CloseModal)
-													]),
-												_List_fromArray(
-													[
-														elm$html$Html$text('×')
-													]))
-											])),
-										A2(
-										elm$html$Html$input,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('title'),
-												elm$html$Html$Attributes$placeholder('タイトルと日時を追加'),
-												elm$html$Html$Attributes$type_('text'),
-												elm$html$Html$Events$onInput(
-												author$project$Main$InputEvent('title'))
-											]),
-										_List_Nil),
-										A2(
-										elm$html$Html$div,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('input-items')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												elm$html$Html$div,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('input-item')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														elm$html$Html$i,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$class('material-icons')
-															]),
-														_List_fromArray(
-															[
-																elm$html$Html$text('watch_later')
-															])),
-														A2(
-														elm$html$Html$input,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$placeholder('日時を追加'),
-																elm$html$Html$Attributes$type_('date'),
-																elm$html$Html$Attributes$value('2020/2/5'),
-																elm$html$Html$Events$onInput(
-																author$project$Main$InputEvent('date'))
-															]),
-														_List_Nil)
-													])),
-												A2(
-												elm$html$Html$div,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('input-item')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														elm$html$Html$i,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$class('material-icons')
-															]),
-														_List_fromArray(
-															[
-																elm$html$Html$text('place')
-															])),
-														A2(
-														elm$html$Html$input,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$placeholder('場所を追加'),
-																elm$html$Html$Attributes$type_('text'),
-																elm$html$Html$Events$onInput(
-																author$project$Main$InputEvent('place'))
-															]),
-														_List_Nil)
-													])),
-												A2(
-												elm$html$Html$div,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('input-item')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														elm$html$Html$i,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$class('material-icons')
-															]),
-														_List_fromArray(
-															[
-																elm$html$Html$text('notes')
-															])),
-														A2(
-														elm$html$Html$input,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$placeholder('説明を追加'),
-																elm$html$Html$Attributes$type_('text'),
-																elm$html$Html$Events$onInput(
-																author$project$Main$InputEvent('explain'))
-															]),
-														_List_Nil)
-													])),
-												A2(
-												elm$html$Html$div,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('btn-wrap'),
-														elm$html$Html$Events$onClick(author$project$Main$SaveEvent)
-													]),
-												_List_fromArray(
-													[
-														A2(
-														elm$html$Html$button,
-														_List_fromArray(
-															[
-																elm$html$Html$Attributes$type_('button')
-															]),
-														_List_fromArray(
-															[
-																elm$html$Html$text('保存')
-															]))
-													]))
-											]))
-									]))
-							]))
-					])) : elm$html$Html$text('')
+				function () {
+				var _n0 = model.viewStatus;
+				switch (_n0.$) {
+					case 'Modal':
+						return A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-back')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('modal')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('modal-content')
+												]),
+											_List_fromArray(
+												[
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('btn-wrap')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$span,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('close-btn'),
+																	elm$html$Html$Events$onClick(author$project$Main$CloseModal)
+																]),
+															_List_fromArray(
+																[
+																	elm$html$Html$text('×')
+																]))
+														])),
+													A2(
+													elm$html$Html$input,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('title'),
+															elm$html$Html$Attributes$placeholder('タイトルと日時を追加'),
+															elm$html$Html$Attributes$type_('text'),
+															elm$html$Html$Events$onInput(
+															author$project$Main$InputEvent('title'))
+														]),
+													_List_Nil),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('input-items')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('input-item')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$i,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$class('material-icons')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('watch_later')
+																		])),
+																	A2(
+																	elm$html$Html$input,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$placeholder('日時を追加'),
+																			elm$html$Html$Attributes$type_('date'),
+																			elm$html$Html$Attributes$value('2020-02-05'),
+																			elm$html$Html$Events$onInput(
+																			author$project$Main$InputEvent('date'))
+																		]),
+																	_List_Nil)
+																])),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('input-item')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$i,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$class('material-icons')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('place')
+																		])),
+																	A2(
+																	elm$html$Html$input,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$placeholder('場所を追加'),
+																			elm$html$Html$Attributes$type_('text'),
+																			elm$html$Html$Events$onInput(
+																			author$project$Main$InputEvent('place'))
+																		]),
+																	_List_Nil)
+																])),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('input-item')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$i,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$class('material-icons')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('notes')
+																		])),
+																	A2(
+																	elm$html$Html$input,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$placeholder('説明を追加'),
+																			elm$html$Html$Attributes$type_('text'),
+																			elm$html$Html$Events$onInput(
+																			author$project$Main$InputEvent('explain'))
+																		]),
+																	_List_Nil)
+																])),
+															A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('btn-wrap'),
+																	elm$html$Html$Events$onClick(author$project$Main$SaveEvent)
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$button,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$type_('button')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('保存')
+																		]))
+																]))
+														]))
+												]))
+										]))
+								]));
+					case 'EventModal':
+						return A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-back')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('modal')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('modal-content')
+												]),
+											_List_fromArray(
+												[
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('btn-wrap')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															elm$html$Html$span,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('close-btn'),
+																	elm$html$Html$Events$onClick(author$project$Main$RemoveEvent)
+																]),
+															_List_fromArray(
+																[
+																	elm$html$Html$text('削除')
+																])),
+															A2(
+															elm$html$Html$span,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('close-btn'),
+																	elm$html$Html$Events$onClick(author$project$Main$CloseModal)
+																]),
+															_List_fromArray(
+																[
+																	elm$html$Html$text('×')
+																]))
+														])),
+													A2(
+													elm$html$Html$p,
+													_List_Nil,
+													_List_fromArray(
+														[
+															elm$html$Html$text(model.title)
+														])),
+													A2(
+													elm$html$Html$div,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('input-items')
+														]),
+													_List_fromArray(
+														[
+															(!(model.place === '')) ? A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('input-item')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$i,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$class('material-icons')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('place')
+																		])),
+																	A2(
+																	elm$html$Html$span,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text(model.place)
+																		]))
+																])) : elm$html$Html$text(''),
+															(!(model.explain === '')) ? A2(
+															elm$html$Html$div,
+															_List_fromArray(
+																[
+																	elm$html$Html$Attributes$class('input-item')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	elm$html$Html$i,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$Attributes$class('material-icons')
+																		]),
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text('notes')
+																		])),
+																	A2(
+																	elm$html$Html$span,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			elm$html$Html$text(model.explain)
+																		]))
+																])) : elm$html$Html$text('')
+														]))
+												]))
+										]))
+								]));
+					default:
+						return elm$html$Html$text('');
+				}
+			}()
 			]));
 };
 var elm$browser$Browser$External = function (a) {

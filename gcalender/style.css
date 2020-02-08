@@ -62,6 +62,16 @@
   overflow-y: scroll;
 }
 
+.event{
+    text-align: left;
+    padding: 2px 11px;
+    background-color: #9292ff;
+    margin-top: 0px;
+    margin-bottom: 3px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
 .modal-back{
   position: fixed;
   top: 0px;

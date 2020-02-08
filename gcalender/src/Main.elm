@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
 import Time.Date as Date exposing (Date, date)
+import Json.Decode as JD
 
 -- MAIN
 
@@ -33,6 +34,7 @@ type alias Event =
 type ViewStatus
   = Init
   | Modal
+  | EventModal
 
 type alias Model =
   { year : Int
@@ -48,6 +50,7 @@ type alias Model =
   , date : String
   , place : String
   , explain : String
+  , eventId : Int
   }
 
 -- init : (Int, Int, Int) -> (Model, Cmd Msg)
@@ -56,15 +59,17 @@ type alias Model =
 
 init : () -> (Model, Cmd Msg)
 init _ =
-  ( Model 2020 2 8 2020 2 8 [] Init (0, 0, 0) "" "" "" "", Cmd.none)
+  ( Model 2020 2 8 2020 2 8 [] Init (0, 0, 0) "" "" "" "" 0, Cmd.none)
 
 -- UPDATE
 type Msg
   = ShowModel Day
+  | ShowEventModal Event
   | CloseModal
   | InputEvent String String
   | SaveEvent
   | ChangeMonth Int
+  | RemoveEvent
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -72,8 +77,27 @@ update msg model =
     ShowModel d ->
       ( {model | viewStatus = Modal, eventDay = d}, Cmd.none)
     
+    ShowEventModal e ->
+      ({ model | 
+            viewStatus = EventModal
+          , title = e.title
+          , eventDay = (e.year, e.month, e.day)
+          , place = e.place
+          , explain = e.explain
+          , eventId = e.id
+       }
+      , Cmd.none)
+    
     CloseModal ->
-      ( {model | viewStatus = Init}, Cmd.none)
+      ( {model | viewStatus = Init, title = "", date = "", place = "", explain = ""}, Cmd.none)
+    
+    RemoveEvent ->
+      ( {model |
+           events = List.filter (\e -> not (e.id == model.eventId )) model.events
+         , viewStatus = Init
+        }
+      , Cmd.none
+      )
     
     InputEvent column value ->
       case column of
@@ -91,8 +115,9 @@ update msg model =
     SaveEvent ->
       let
         (y, m, d) = model.eventDay
+        headE = Maybe.withDefault (Event 0 0 0 0 "" "" "" "") <| List.head model.events
         e = Event 
-              (List.length model.events)
+              (headE.id + 1)
               y
               m
               d
@@ -116,7 +141,7 @@ update msg model =
 --SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions model = 
+subscriptions _ = 
   Sub.none
 
 -- VIEW
@@ -136,42 +161,71 @@ view model =
           [ text <| String.fromInt model.year ++ "年" ++ String.fromInt model.month ++ "月" ]
         ]
     , div [ class "calender-main" ]
-        [ div [ class "calender-header" ] (weekDaysView)
+        [ div [ class "calender-header" ]
+            ( List.map (\w -> div [ class "header-item" ] [ text w ]) ["日", "月", "火", "水", "木", "金", "土"] )
         , div [ class "calender-days" ] (dayList model)
         ]
-    , if (model.viewStatus == Modal) then
-        div [ class "modal-back" ]
-          [ div [ class "modal" ]
-            [ div [ class "modal-content" ]
-              [ div [ class "btn-wrap" ]
-                [ span [ class "close-btn", onClick CloseModal ]  [ text "×" ] ]
-              , input [ class "title", placeholder "タイトルと日時を追加", type_ "text", onInput <| InputEvent "title" ] []
-              , div [ class "input-items" ]
-                [ div [ class "input-item" ]
-                  [ i [ class "material-icons" ] [ text "watch_later" ]
-                  , input [ placeholder "日時を追加", type_ "date", value "2020/2/5", onInput <| InputEvent "date" ] []
+    , case model.viewStatus of
+        Modal ->
+          div [ class "modal-back" ]
+            [ div [ class "modal" ]
+              [ div [ class "modal-content" ]
+                [ div [ class "btn-wrap" ]
+                  [ span [ class "close-btn", onClick CloseModal ]  [ text "×" ] ]
+                , input [ class "title", placeholder "タイトルと日時を追加", type_ "text", onInput <| InputEvent "title" ] []
+                , div [ class "input-items" ]
+                  [ div [ class "input-item" ]
+                    [ i [ class "material-icons" ] [ text "watch_later" ]
+                    , input [ placeholder "日時を追加", type_ "date", value "2020-02-05", onInput <| InputEvent "date" ] []
+                    ]
+                  , div [ class "input-item" ]
+                    [ i [ class "material-icons" ] [ text "place" ]
+                    , input [ placeholder "場所を追加", type_ "text", onInput <| InputEvent "place" ] []
+                    ]
+                  , div [ class "input-item" ]
+                    [ i [ class "material-icons" ] [ text "notes" ]
+                    , input [ placeholder "説明を追加", type_ "text", onInput <| InputEvent "explain" ] []
+                    ]
+                  , div [ class "btn-wrap", onClick SaveEvent ]
+                    [ button [ type_ "button" ] [ text "保存" ] ]
                   ]
-                , div [ class "input-item" ]
-                  [ i [ class "material-icons" ] [ text "place" ]
-                  , input [ placeholder "場所を追加", type_ "text", onInput <| InputEvent "place" ] []
-                  ]
-                , div [ class "input-item" ]
-                  [ i [ class "material-icons" ] [ text "notes" ]
-                  , input [ placeholder "説明を追加", type_ "text", onInput <| InputEvent "explain" ] []
-                  ]
-                , div [ class "btn-wrap", onClick SaveEvent ]
-                  [ button [ type_ "button" ] [ text "保存" ] ]
                 ]
               ]
             ]
-          ]
-      else
-        text ""
-    ]
+        
+        EventModal ->
+          div [ class "modal-back" ]
+            [ div [ class "modal" ]
+              [ div [ class "modal-content" ]
+                [ div [ class "btn-wrap" ]
+                  [ span [ class "close-btn", onClick RemoveEvent ]  [ text "削除" ]
+                  , span [ class "close-btn", onClick CloseModal ]  [ text "×" ]
+                  ]
+                , p [] [ text model.title ]
+                , div [ class "input-items" ]
+                  [ if not (model.place == "") then
+                      div [ class "input-item" ]
+                      [ i [ class "material-icons" ] [ text "place" ]
+                      , span [] [ text model.place ]
+                      ]
+                    else
+                      text ""
 
-weekDaysView : List (Html Msg)
-weekDaysView =
-  List.map (\w -> div [ class "header-item" ] [ text w ]) ["日", "月", "火", "水", "木", "金", "土"]
+                  , if not (model.explain == "") then
+                      div [ class "input-item" ]
+                      [ i [ class "material-icons" ] [ text "notes" ]
+                      , span [] [text model.explain]
+                      ]
+                    else
+                      text ""
+                  ]
+                ]
+              ]
+            ]
+
+        Init ->
+          text ""
+    ]
 
 dayList : Model -> List (Html Msg)
 dayList model =
@@ -185,11 +239,15 @@ viewDay model d =
     ]
 
 toStringDay : Day -> String
-toStringDay (y, m, d) = String.fromInt d
+toStringDay (_, _, d) = String.fromInt d
 
 viewEventTag : Event -> Html Msg
 viewEventTag e =
-  p [ class "event" ] [ text e.title ]
+  p [ class "event", customOnClick <| ShowEventModal e ] [ text e.title ]
+
+customOnClick : msg -> Attribute msg
+customOnClick msg =
+  Html.Events.custom "click" (JD.succeed { message = msg, stopPropagation = True, preventDefault = True})
 
 findEvents : Model -> Day -> List Event
 findEvents model (y, m, d) =

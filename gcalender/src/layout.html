@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <link rel="stylesheet" href="../style.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+  <div class="header">
+    <i class="material-icons">menu</i>
+    <i class="material-icons calender-icon">event_note</i>
+    <span>カレンダー</span>
+    <div class="chevrons">
+      <i class="material-icons">chevron_left</i>
+      <i class="material-icons">chevron_right</i>
+    </div>
+    <span>2020年2月</span>
+  </div>
+  <div class="calender-main">
+    <div class="calender-header">
+      <div class="header-item">日</div>
+      <div class="header-item">月</div>
+      <div class="header-item">火</div>
+      <div class="header-item">水</div>
+      <div class="header-item">木</div>
+      <div class="header-item">金</div>
+      <div class="header-item">土</div>
+    </div>
+
+    <div class="calender-days">
+      <div class="day">
+        <p class="date">26</p>
+        <div class="day-events">
+          <p class="event"></p>
+        </div>
+      </div>
+      <div class="day">
+        <p class="date">26</p>
+        <div class="day-events">
+          <p class="event"></p>
+        </div>
+      </div>
+      <div class="day">
+        <p class="date">26</p>
+        <div class="day-events">
+          <p class="event"></p>
+        </div>
+      </div>
+      <div class="day">
+        <p class="date">26</p>
+        <div class="day-events">
+          <p class="event"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-back">
+    <div class="modal">
+      <div class="modal-content">
+        <div class="btn-wrap">
+          <span class="close-btn">
+            ×
+          </span>
+        </div>
+        <input type="text" class="title" placeholder="タイトルと日時を追加">
+        <div class="input-items">
+          <div class="input-item">
+            <i class="material-icons">watch_later</i>
+            <input type="text" placeholder="日時を追加" value="2020/2/5">
+          </div>
+          <div class="input-item">
+            <i class="material-icons">place</i>
+            <input type="text" placeholder="場所を追加">
+          </div>
+          <div class="input-item">
+            <i class="material-icons">notes</i>
+            <input type="text" placeholder="説明を追加">
+          </div>
+          <div class="btn-wrap">
+            <button type="button">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
